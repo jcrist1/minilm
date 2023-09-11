@@ -1,10 +1,9 @@
-use std::{error::Error, fmt::Display, sync::Arc};
+use std::{error::Error, sync::Arc};
 
 use anyhow::Context;
-use leptos::Props;
 use leptos::*;
 use log::{debug, info};
-use minilm::{new_dfdx, run_dfdx, Cpu, CpuError, MiniLM};
+use minilm::{Cpu, CpuError, MiniLM};
 use serde::{Deserialize, Serialize};
 
 fn main() {
@@ -13,10 +12,6 @@ fn main() {
     mount_to_body(move |cx| {
         view! { cx,  <App />}
     })
-}
-
-struct MlState {
-    minilm: minilm::MiniLM<f32, Cpu>,
 }
 
 async fn get_data(path: &str) -> anyhow::Result<Vec<u8>> {
@@ -74,7 +69,13 @@ impl std::fmt::Display for SiteError {
 
 impl From<anyhow::Error> for SiteError {
     fn from(value: anyhow::Error) -> Self {
-        SiteError(format!("{value}"))
+        SiteError(format!(
+            "{value}, {}",
+            value
+                .chain()
+                .map(|err| format!("{err}"))
+                .collect::<String>()
+        ))
     }
 }
 
@@ -101,9 +102,8 @@ impl<H: AsRef<[f32]>, T: AsRef<[f32]>> Dot<T> for H {
     fn dot(&self, t: &T) -> f32 {
         self.as_ref()
             .iter()
-            .copied()
-            .zip(t.as_ref().iter().copied())
-            .map(|(x, y)| x * y)
+            .zip(t.as_ref().iter())
+            .map(|(x, y)| *x * *y)
             .sum::<f32>()
     }
 }
@@ -122,12 +122,6 @@ fn Loaded(cx: Scope, #[prop()] model: Arc<MiniLM<f32, Cpu>>) -> impl IntoView {
     let (left_vec_data, set_left_vec_data) = create_signal(cx, Ok(vec![0.0; 384]));
     let (right_vec_data, set_right_vec_data) = create_signal(cx, Ok(vec![0.0; 384]));
     let (score, set_score) = create_signal(cx, Ok(0.0));
-    let thai_food_vec = Arc::new(
-        model
-            .encode("Thai food")
-            .expect("Failed to encode thai food"),
-    );
-
     let model_for_right = model.clone();
     let on_input_right = move |ev| {
         let model = Arc::clone(&model_for_right);
@@ -167,10 +161,10 @@ fn Loaded(cx: Scope, #[prop()] model: Arc<MiniLM<f32, Cpu>>) -> impl IntoView {
         </p>
         <p>
         <ErrorBoundary
-            fallback = |cx, errors| view! {cx,  "Failed to encode text"}
+            fallback = |_cx, _errors| view! {cx,  "Failed to encode text"}
         >
             <p>"Successfully encoded text"</p>
-            <p>"Sum: " {score}</p>
+            <p>"Similarity Score: " {score}</p>
         </ErrorBoundary>
         </p>
     }
@@ -183,15 +177,9 @@ fn load_model(site_res: SiteRes<SiteData>) -> anyhow::Result<MiniLM<f32, Cpu>> {
 
 #[component]
 fn App(cx: Scope) -> impl IntoView {
-    let (count, set_count) = create_signal(cx, 0);
-    // our source signal: some synchronous, local state
-    // let (tokenizer_data, set_tokenizer_data) = create_signal(cx, Vec::<u8>::new());
-
-    // our resource
     let async_data = create_resource(
         cx,
         || (),
-        // every time `count` changes, this will run
         |_| async move {
             let data: SiteRes<SiteData> = get_minilm_data().await.into();
             data
@@ -199,6 +187,7 @@ fn App(cx: Scope) -> impl IntoView {
     );
 
     view! { cx,
+            <h1> MiniLM Similarity Scorer</h1>
             {move || {
                 let data = async_data.read(cx).map(load_model);
                 match data {
@@ -208,13 +197,12 @@ fn App(cx: Scope) -> impl IntoView {
                      }
                  }
                  Some(Err(err)) => {
-                     error!("Error encoding text: {err}");
+                     error!("Error loading model: {err}");
                      View::Text(view!{cx, "Could not encode text"})
                  }
                  None => {
                      info!("Data not loaded yet");
-                     let view: View = View::Text(view!{cx, "Loading"});
-                     view
+                     View::Text(view!{cx, "Loading"})
 
                  }
              }}

@@ -7,6 +7,7 @@ edition = "2021"
 
 
 [dependencies]
+anyhow = "1.0.75"
 dfdx = { version = "0.13.0", features = ["safetensors"] }
 num-traits = "0.2.16"
 pyo3 = { version = "0.19.2", optional = true }

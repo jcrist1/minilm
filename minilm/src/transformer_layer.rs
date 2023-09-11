@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use dfdx::{
     prelude::{
         modules::{LayerNorm1D, Linear},
@@ -18,11 +16,6 @@ use tokenizers::Tokenizer;
 
 use crate::embeddings::BertEmbeddings;
 
-pub struct TransformerLayer<const DIM: usize, E: Dtype, D: Device<E>> {
-    _x: PhantomData<[E; DIM]>,
-    _y: PhantomData<D>,
-}
-
 pub struct SelfAttention<const HEAD_DIM: usize, const N_HEADS: usize, E: Dtype, D: Device<E>>
 where
     [(); HEAD_DIM * N_HEADS]: Sized,
@@ -30,6 +23,7 @@ where
     key: Linear<{ HEAD_DIM * N_HEADS }, { HEAD_DIM * N_HEADS }, E, D>,
     query: Linear<{ HEAD_DIM * N_HEADS }, { HEAD_DIM * N_HEADS }, E, D>,
     value: Linear<{ HEAD_DIM * N_HEADS }, { HEAD_DIM * N_HEADS }, E, D>,
+    #[allow(dead_code)]
     dropout: Dropout,
     softmax: Softmax,
 }
@@ -101,7 +95,7 @@ where
 
         let attention_score = attention_score.try_div(
             E::from_usize(HEAD_DIM)
-                .expect(&format!("failed to cast {HEAD_DIM} as dtype"))
+                .unwrap_or_else(|| panic!("failed to cast {HEAD_DIM} as dtype"))
                 .sqrt(),
         )?;
         let attention_probs = self.softmax.try_forward(attention_score)?;
@@ -495,6 +489,7 @@ where
     }
 }
 
+#[allow(unused)]
 struct Pooler<const DIM: usize, E: Dtype, D: Device<E>> {
     dense: Linear<DIM, DIM, E, D>,
     activation: Tanh,
@@ -643,12 +638,11 @@ where
 
 impl MiniLM<f32, Cpu> {
     // todo: error handling
-    pub fn new(tokenizer_bytes: &[u8], model_bytes: &[u8]) -> Result<Self, CpuError> {
+    pub fn new(tokenizer_bytes: &[u8], model_bytes: &[u8]) -> anyhow::Result<Self> {
         let tokenizer =
-            Tokenizer::from_bytes(tokenizer_bytes).map_err(|_| CpuError::WrongNumElements)?;
+            Tokenizer::from_bytes(tokenizer_bytes).map_err(|err| anyhow::anyhow!("{err}"))?;
 
-        let mut tensors =
-            SafeTensors::deserialize(model_bytes).map_err(|_| CpuError::WrongNumElements)?;
+        let mut tensors = SafeTensors::deserialize(model_bytes)?;
         let dev = Cpu::default();
 
         let mut model = BertModel::<30522, 512, 32, 12, 6, f32, Cpu>::build(&dev);
@@ -657,7 +651,7 @@ impl MiniLM<f32, Cpu> {
             m: (&mut model, String::new()),
             f: &mut tensors,
         })
-        .map_err(|_| CpuError::WrongNumElements)?;
+        .map_err(|err| anyhow::anyhow!("{err:?}"))?;
         Ok(MiniLM { tokenizer, model })
     }
 
