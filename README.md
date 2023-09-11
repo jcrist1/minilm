@@ -14,7 +14,7 @@ poetry install
 poetry run python minilm/load_model.py
 ```
 
-This will create a `sites/tokenize/` path and a `sites/model.safetensors` in the top level `sites` directory. 
+This will create a `sites/model.safetensors` in the top level `sites` directory. 
 The install step will create a virtual environment, which can be determined by running
 ```sh
 poetry run which python
