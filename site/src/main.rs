@@ -102,9 +102,8 @@ impl<H: AsRef<[f32]>, T: AsRef<[f32]>> Dot<T> for H {
     fn dot(&self, t: &T) -> f32 {
         self.as_ref()
             .iter()
-            .copied()
-            .zip(t.as_ref().iter().copied())
-            .map(|(x, y)| x * y)
+            .zip(t.as_ref().iter())
+            .map(|(x, y)| *x * *y)
             .sum::<f32>()
     }
 }
@@ -132,6 +131,7 @@ fn Loaded(cx: Scope, #[prop()] model: Arc<MiniLM<f32, Cpu>>) -> impl IntoView {
         } else {
             model.encode(&text)
         };
+        info!("right{:?}", right);
 
         let left = left_vec_data();
         let new_score = (score_vecs(left.as_ref(), right.as_ref())).map_err(|err| *err);
@@ -148,6 +148,7 @@ fn Loaded(cx: Scope, #[prop()] model: Arc<MiniLM<f32, Cpu>>) -> impl IntoView {
         } else {
             model.encode(&text)
         };
+        info!("left {:?}", left);
 
         let right = right_vec_data();
         let new_score = (score_vecs(left.as_ref(), right.as_ref())).map_err(|err| *err);
