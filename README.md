@@ -3,7 +3,7 @@ Dependencies for this
 * [trunk](https://trunkrs.dev/)
 * [rust](https://rustup.rs/) (obviously, but also it's nightly)
 
-This is a demo of running a dfdx port of the [MiniLM](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) model to dfdx that can run in WASM.
+This is a demo of running a port of the [MiniLM](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) model to dfdx that can run in WASM on a browser.
 In order to run it locally you'll need to download some model files from the huggingface hub. This can by done from the `python` directory by running
 ```sh
 poetry install
