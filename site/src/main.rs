@@ -131,7 +131,6 @@ fn Loaded(cx: Scope, #[prop()] model: Arc<MiniLM<f32, Cpu>>) -> impl IntoView {
         } else {
             model.encode(&text)
         };
-        info!("right{:?}", right);
 
         let left = left_vec_data();
         let new_score = (score_vecs(left.as_ref(), right.as_ref())).map_err(|err| *err);
@@ -148,7 +147,6 @@ fn Loaded(cx: Scope, #[prop()] model: Arc<MiniLM<f32, Cpu>>) -> impl IntoView {
         } else {
             model.encode(&text)
         };
-        info!("left {:?}", left);
 
         let right = right_vec_data();
         let new_score = (score_vecs(left.as_ref(), right.as_ref())).map_err(|err| *err);
@@ -166,7 +164,7 @@ fn Loaded(cx: Scope, #[prop()] model: Arc<MiniLM<f32, Cpu>>) -> impl IntoView {
             fallback = |_cx, _errors| view! {cx,  "Failed to encode text"}
         >
             <p>"Successfully encoded text"</p>
-            <p>"Score: " {score}</p>
+            <p>"Similarity Score: " {score}</p>
         </ErrorBoundary>
         </p>
     }
@@ -189,6 +187,7 @@ fn App(cx: Scope) -> impl IntoView {
     );
 
     view! { cx,
+            <h1> MiniLM Similarity Scorer</h1>
             {move || {
                 let data = async_data.read(cx).map(load_model);
                 match data {
