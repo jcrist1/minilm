@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "minilm"
+version = "0.1.0"
+description = ""
+authors = ["Jan Cristina <jan.cristina@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+transformers = "^4.33.1"
+sentence-transformers = "^2.2.2"
+safetensors = "^0.3.3"
+jupyterlab = "^4.0.5"
+
+
+[tool.poetry.group.dev.dependencies]
+jedi-language-server = "^0.41.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
