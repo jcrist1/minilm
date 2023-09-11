@@ -1,8 +1,6 @@
 #![feature(generic_const_exprs)]
 #![feature(inline_const)]
-use dfdx::prelude::{BuildModule, Module};
 use dfdx::shapes::Rank2;
-use dfdx::tensor::OnesTensor;
 mod embeddings;
 mod transformer_layer;
 
@@ -11,27 +9,16 @@ pub type DfdxTensor = dfdx::tensor::Tensor<Rank2<16, 5>, f32, Cpu>;
 
 pub struct Test(DfdxLinear, DfdxTensor);
 
-pub fn new_dfdx() -> Test {
-    let device = Cpu::default();
-    let linear = BuildModule::build(&device);
-    let tensor: DfdxTensor = device.ones();
-    Test(linear, tensor)
-}
 pub use dfdx::tensor::Cpu;
 pub use dfdx::tensor::CpuError;
 pub use tokenizers::Tokenizer;
 pub use transformer_layer::MiniLM;
-
-pub fn run_dfdx(Test(linear, tens): Test) -> String {
-    format!("{:?}", linear.forward(tens))
-}
 
 #[cfg(test)]
 mod tests {
 
     use std::{io::Read, path::Path};
 
-    use super::*;
     use dfdx::{
         shapes::{Dtype, Shape},
         tensor::{safetensors::SafeDtype, Tensor},
@@ -63,9 +50,9 @@ mod tests {
     #[test]
     fn test_embeddings() {
         use dfdx::{
-            prelude::LoadFromSafetensors,
+            prelude::{BuildModule, LoadFromSafetensors, Module},
             shapes::{Const, HasShape},
-            tensor::{TensorFromVec, ZerosTensor},
+            tensor::{Cpu, TensorFromVec, ZerosTensor},
         };
         use pyo3::Python;
         use tokenizers::Tokenizer;
