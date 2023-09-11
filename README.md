@@ -1,7 +1,7 @@
 # MiniLM in Wasm 
 This is a demo of running a port of the [MiniLM](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) model to dfdx that can run in WASM on a browser.
 The minilm model is a good model for semantic retrieval tasks, and is ideally suited for client side implementation because it is quite lite weight.
-![preview.png]
+![screendhot of the minilm model running in a browser showing "Asian food" and "Thai curry" having a similarity of about 0.59](preview.png)
 
 In order to run it locally you'll need to download some model files from the huggingface hub. This can by done from the `python` directory by running
 Dependencies for this
