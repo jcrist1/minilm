@@ -121,7 +121,6 @@ fn score_vecs<'a, H: AsRef<[f32]>, T: AsRef<[f32]>>(
 fn Loaded(cx: Scope, #[prop()] model: Arc<MiniLM<f32, Cpu>>) -> impl IntoView {
     let (left_vec_data, set_left_vec_data) = create_signal(cx, Ok(vec![0.0; 384]));
     let (right_vec_data, set_right_vec_data) = create_signal(cx, Ok(vec![0.0; 384]));
-    let (score, set_score) = create_signal(cx, Ok(0.0));
     let model_for_right = model.clone();
     let on_input_right = move |ev| {
         let model = Arc::clone(&model_for_right);
@@ -133,9 +132,7 @@ fn Loaded(cx: Scope, #[prop()] model: Arc<MiniLM<f32, Cpu>>) -> impl IntoView {
         };
 
         let left = left_vec_data();
-        let new_score = (score_vecs(left.as_ref(), right.as_ref())).map_err(|err| *err);
         set_right_vec_data(right);
-        set_score(new_score);
     };
 
     let model_for_left = model.clone();
@@ -149,9 +146,10 @@ fn Loaded(cx: Scope, #[prop()] model: Arc<MiniLM<f32, Cpu>>) -> impl IntoView {
         };
 
         let right = right_vec_data();
-        let new_score = (score_vecs(left.as_ref(), right.as_ref())).map_err(|err| *err);
         set_left_vec_data(left);
-        set_score(new_score);
+    };
+    let set_score = move || {
+        (score_vecs(left_vec_data().as_ref(), right_vec_data().as_ref())).map_err(|err| *err)
     };
 
     view! {cx,
@@ -164,7 +162,7 @@ fn Loaded(cx: Scope, #[prop()] model: Arc<MiniLM<f32, Cpu>>) -> impl IntoView {
             fallback = |_cx, _errors| view! {cx,  "Failed to encode text"}
         >
             <p>"Successfully encoded text"</p>
-            <p>"Similarity Score: " {score}</p>
+            <p>"Similarity Score: " {set_score}</p>
         </ErrorBoundary>
         </p>
     }
